@@ -6,10 +6,12 @@ put melons in a shopping cart.
 Authors: Joel Burton, Christian Fernandez, Meggie Mahnken, Katie Byers.
 """
 
-from flask import Flask, render_template, redirect, flash, session
+from flask import Flask,request,render_template, redirect, flash, session
 import jinja2
 
 import melons
+
+import customers
 
 app = Flask(__name__)
 
@@ -116,7 +118,7 @@ def add_to_cart(melon_id):
     # - redirect the user to the cart page
     
     #if 'cart' not in session keys, add it to sessions
-    if 'cart' not in session.keys():
+    if 'cart' not in session:
         session['cart'] = {}
 
     if melon_id not in session['cart']:
@@ -174,7 +176,20 @@ def process_login():
     # - if they don't, flash a failure message and redirect back to "/login"
     # - do the same if a Customer with that email doesn't exist
 
-    return "Oops! This needs to be implemented"
+    user_email = request.form.get('email')
+    if customers.get_by_email(user_email):
+        current_customer = customers.get_by_email(user_email)
+        print(current_customer.email)
+        if current_customer.password == request.form.get('password'):
+            session['user'] = user_email
+            flash("You've logged in successfully. Welcome to your Ubermelons account.")
+            return redirect('/melons')
+        else:
+            flash('Incorrect Password. Please try again')
+            return redirect('/melons')
+    else:
+        flash("no account with that email exists. please create one or try again")
+        return redirect('/login')
 
 
 @app.route("/checkout")
