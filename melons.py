@@ -26,11 +26,22 @@ class Melon(object):
         self.image_url = image_url
         self.color = color
         self.seedless = seedless
+        self.quantity = 0
+        self.total_cost = 0
 
     def price_str(self):
         """Return price formatted as string $x.xx"""
 
         return "${:.2f}".format(self.price)
+
+    def update_quantity_cost(self, new_quantity):
+        self.quantity = new_quantity
+        self.total_cost = new_quantity * self.price
+
+    def tot_cost_str(self):
+        """Return price formatted as string $x.xx"""
+
+        return "${:.2f}".format(self.total_cost)
 
     def __repr__(self):
         """Convenience method to show information about melon in console."""

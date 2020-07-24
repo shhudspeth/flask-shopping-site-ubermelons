@@ -6,7 +6,7 @@ put melons in a shopping cart.
 Authors: Joel Burton, Christian Fernandez, Meggie Mahnken, Katie Byers.
 """
 
-from flask import Flask, render_template, redirect, flash
+from flask import Flask, render_template, redirect, flash, session
 import jinja2
 
 import melons
@@ -30,7 +30,7 @@ app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = True
 @app.route("/")
 def index():
     """Return homepage."""
-
+    session['session_id'] = "first"
     return render_template("homepage.html")
 
 
@@ -50,8 +50,8 @@ def show_melon(melon_id):
     Show all info about a melon. Also, provide a button to buy that melon.
     """
 
-    melon = melons.get_by_id("meli")
-    print(melon)
+    melon = melons.get_by_id(melon_id)
+
     return render_template("melon_details.html",
                            display_melon=melon)
 
@@ -77,8 +77,23 @@ def show_shopping_cart():
     #
     # Make sure your function can also handle the case wherein no cart has
     # been added to the session
+    if session['cart']:
+        cart = session['cart']
+        names_of_melons = []
+        cart_total = 0
+        for melon in cart:
+            melon_object = melons.get_by_id(melon)
+            quantity = cart[melon]
+            melon_object.update_quantity_cost(quantity)
 
-    return render_template("cart.html")
+            names_of_melons.append(melon_object)
+            cart_total += melon_object.total_cost
+
+    else:
+        flash("There are no items in your cart. Go find some melons.")
+
+    
+    return render_template("cart.html", melon_list = names_of_melons, cart_total=cart_total)
 
 
 @app.route("/add_to_cart/<melon_id>")
@@ -99,8 +114,35 @@ def add_to_cart(melon_id):
     # - increment the count for that melon id by 1
     # - flash a success message
     # - redirect the user to the cart page
+    
+    #if 'cart' not in session keys, add it to sessions
+    if 'cart' not in session.keys():
+        session['cart'] = {}
 
-    return "Oops! This needs to be implemented!"
+    if melon_id not in session['cart']:
+        # add melon to cart dictionary and set quantity to 1
+        session['cart'][melon_id] = 1
+    else:
+        # increase quantity by 1
+        session['cart'][melon_id] += 1
+
+    # get melon info for display
+    melon = melons.get_by_id(melon_id)
+
+    #flash message that a melon was added to the cart
+    flash(f"You added one {melon.common_name} to your cart!")
+
+    return redirect("/cart")
+
+@app.route('/session-basic/set')
+def set_session():
+    session['session_id'] = "first"
+    return redirect('/index')
+
+@app.route('/session-basic/get')
+def get_session():
+    return session['session_id']
+
 
 
 @app.route("/login", methods=["GET"])
